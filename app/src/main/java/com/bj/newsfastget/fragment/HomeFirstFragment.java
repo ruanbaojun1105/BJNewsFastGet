@@ -38,8 +38,9 @@ public class HomeFirstFragment extends SwipeSimpleFragment {
     }
 
     @Override
-    protected void initEventAndData() {
+    protected void initCreateView() {
         text.setText(getClass().getName());
     }
+
 
 }

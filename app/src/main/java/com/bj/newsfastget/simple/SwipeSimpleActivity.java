@@ -45,7 +45,6 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 public abstract class SwipeSimpleActivity extends SwipeBackActivity implements EasyPermissions.PermissionCallbacks {
 
-    protected Activity mContext;
     private Unbinder mUnBinder;
     public ImmersionBar mImmersionBar;
     private static final String NAVIGATIONBAR_IS_MIN = "navigationbar_is_min";
@@ -56,7 +55,6 @@ public abstract class SwipeSimpleActivity extends SwipeBackActivity implements E
         setContentView(getLayout());
         mUnBinder = ButterKnife.bind(this);
         EventBus.getDefault().register(this);
-        mContext = this;
         getSwipeBackLayout().setEdgeLevel(App.dip2px(40));//可滑范围
         getWindow().getDecorView().setBackgroundColor(Color.TRANSPARENT);
         initImmersionBar();
@@ -142,12 +140,12 @@ public abstract class SwipeSimpleActivity extends SwipeBackActivity implements E
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-        KeyboardUtils.hideSoftInput(mContext);
+        KeyboardUtils.hideSoftInput(this);
         EventBus.getDefault().unregister(this);
         if (mImmersionBar != null)
             mImmersionBar.destroy();  //必须调用该方法，防止内存泄漏，不调用该方法，如果界面bar发生改变，在不关闭app的情况下，退出此界面再进入将记忆最后一次bar改变的状态
         mUnBinder.unbind();
+        super.onDestroy();
     }
 
     @Override
@@ -203,7 +201,7 @@ public abstract class SwipeSimpleActivity extends SwipeBackActivity implements E
             if (ev.getAction() == MotionEvent.ACTION_DOWN) {
                 View v = getCurrentFocus();
                 if (isShouldHideKeyboard(v, ev)) {
-                    KeyboardUtils.hideSoftInput(mContext);
+                    KeyboardUtils.hideSoftInput(this);
                 }
             }
             return super.dispatchTouchEvent(ev);
@@ -254,6 +252,6 @@ public abstract class SwipeSimpleActivity extends SwipeBackActivity implements E
                 }
             }).setBottomMargin(App.dip2px(50)).showWarning();
         }else
-            Toast.makeText(mContext, "您拒绝了所需要的相关权限请求!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "您拒绝了所需要的相关权限请求!", Toast.LENGTH_SHORT).show();
     }
 }

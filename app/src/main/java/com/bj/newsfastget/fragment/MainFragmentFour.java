@@ -1,6 +1,7 @@
 package com.bj.newsfastget.fragment;
 
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 
 import com.bj.newsfastget.R;
 
@@ -18,7 +19,13 @@ public class MainFragmentFour extends BaseMainFragment{
     }
 
     @Override
-    protected void initEventAndData() {
+    protected void initCreateView() {
+
+    }
+
+    @Override
+    public void onLazyInitView(@Nullable Bundle savedInstanceState) {
+        super.onLazyInitView(savedInstanceState);
         if (findChildFragment(HomeFourFragment.class) == null) {
             loadRootFragment(R.id.fl_container, HomeFourFragment.newInstance());
         }

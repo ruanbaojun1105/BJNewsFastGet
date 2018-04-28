@@ -32,17 +32,8 @@ import pub.devrel.easypermissions.EasyPermissions;
 public abstract class SwipeSimpleFragment extends SupportFragment implements EasyPermissions.PermissionCallbacks {
 
     protected View mView;
-    protected Activity mActivity;
-    protected Context mContext;
     private Unbinder mUnBinder;
-    private boolean isInited = false;
 
-    @Override
-    public void onAttach(Context context) {
-        mActivity = (Activity) context;
-        mContext = context;
-        super.onAttach(context);
-    }
 
     @Nullable
     @Override
@@ -51,14 +42,10 @@ public abstract class SwipeSimpleFragment extends SupportFragment implements Eas
 //        EventBusActivityScope.getDefault(_mActivity).register(this);
         mUnBinder = ButterKnife.bind(this, mView);
         EventBus.getDefault().register(this);
+        initCreateView();
         return mView;
     }
 
-    @Override
-    public void onLazyInitView(@Nullable Bundle savedInstanceState) {
-        super.onLazyInitView(savedInstanceState);
-        initEventAndData();
-    }
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -72,17 +59,12 @@ public abstract class SwipeSimpleFragment extends SupportFragment implements Eas
         super.onDestroy();
     }
 
-    @Override
-    public void onHiddenChanged(boolean hidden) {
-        super.onHiddenChanged(hidden);
-        if (!isInited && !hidden) {
-            isInited = true;
-            initEventAndData();
-        }
-    }
 
     protected abstract int getLayoutId();
-    protected abstract void initEventAndData();
+
+    protected abstract void initCreateView();
+
+
     @Override
     public void onStart() {
         super.onStart();

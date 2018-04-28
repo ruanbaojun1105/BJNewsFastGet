@@ -38,7 +38,7 @@ public class HomeTwoFragment extends SwipeSimpleFragment {
     }
 
     @Override
-    protected void initEventAndData() {
+    protected void initCreateView() {
         text.setText(getClass().getName());
     }
 
