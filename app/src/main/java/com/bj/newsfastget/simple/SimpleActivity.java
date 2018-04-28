@@ -2,7 +2,6 @@ package com.bj.newsfastget.simple;
 
 import android.app.Activity;
 import android.database.ContentObserver;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
@@ -16,13 +15,10 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.bj.newsfastget.R;
 import com.blankj.utilcode.util.KeyboardUtils;
 import com.gyf.barlibrary.ImmersionBar;
 import com.gyf.barlibrary.OSUtils;
-import com.hwx.balancingcar.balancingcar.R;
-import com.joanzapata.iconify.IconDrawable;
-import com.joanzapata.iconify.fonts.FontAwesomeIcons;
-import com.umeng.message.PushAgent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -57,7 +53,6 @@ public abstract class SimpleActivity extends SupportActivity implements EasyPerm
         mUnBinder = ButterKnife.bind(this);
         EventBus.getDefault().register(this);
         mContext = this;
-        PushAgent.getInstance(mContext).onAppStart();//友盟推送统计
         initImmersionBar();
         initEventAndData();
         //解决华为emui3.0与3.1手机手动隐藏底部导航栏时，导航栏背景色未被隐藏的问题
@@ -114,7 +109,7 @@ public abstract class SimpleActivity extends SupportActivity implements EasyPerm
         } catch (Exception e) {
             e.printStackTrace();
         }
-        toolbar.setNavigationIcon(new IconDrawable(mContext, FontAwesomeIcons.fa_angle_left).color(Color.WHITE).sizeDp(25));
+//        toolbar.setNavigationIcon(new IconDrawable(mContext, FontAwesomeIcons.fa_angle_left).color(Color.WHITE).sizeDp(25));
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
