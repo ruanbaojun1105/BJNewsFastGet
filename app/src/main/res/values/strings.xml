@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">BJNewsFastGet</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+    <!-- Download error -->
+    <string name="download_error">下载出错了：%1$s</string>
+    <string name="download_error_server">服务器数据错误！</string>
+    <string name="download_error_network">网络不可用，请检查网络！</string>
+    <string name="download_error_storage">存储卡错误，请检查存储卡！</string>
+    <string name="download_error_space">存储卡空间不足！</string>
+    <string name="download_error_timeout">下载超时！</string>
+    <string name="download_error_un_know_host">找不到服务器。</string>
+    <string name="download_error_url">URL地址错误。</string>
+    <string name="download_error_un">未知错误。</string>
+</resources>
