@@ -27,6 +27,7 @@ import android.os.Vibrator;
 import android.support.v4.content.LocalBroadcastManager;
 import com.bj.newsfastget.util.Cockroach;
 import com.blankj.utilcode.util.LogUtils;
+import com.blankj.utilcode.util.SizeUtils;
 import com.blankj.utilcode.util.Utils;
 import com.bumptech.glide.Glide;
 import com.yanzhenjie.nohttp.InitializationConfig;
@@ -183,16 +184,14 @@ public class App extends android.app.Application {
      * 根据手机的分辨率从 dp 的单位 转成为 px(像素)
      */
     public static int dip2px(float dpValue) {
-        final float scale = getContext().getResources().getDisplayMetrics().density;
-        return (int) (dpValue * scale + 0.5f);
+        return SizeUtils.dp2px(dpValue);
     }
 
     /**
      * 根据手机的分辨率从 px(像素) 的单位 转成为 dp
      */
     public static int px2dip(float pxValue) {
-        final float scale = getContext().getResources().getDisplayMetrics().density;
-        return (int) (pxValue / scale + 0.5f);
+        return SizeUtils.px2dp(pxValue);
     }
 
 
