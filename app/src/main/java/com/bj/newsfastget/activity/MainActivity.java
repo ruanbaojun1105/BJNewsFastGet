@@ -23,6 +23,7 @@ import com.bj.newsfastget.fragment.MainFragmentThree;
 import com.bj.newsfastget.fragment.MainFragmentTwo;
 import com.bj.newsfastget.fragment.HomeThreeFragment;
 import com.bj.newsfastget.fragment.HomeTwoFragment;
+import com.bj.newsfastget.simple.SimpleActivity;
 import com.bj.newsfastget.simple.SwipeSimpleActivity;
 import com.bj.newsfastget.view.BottomBar;
 import com.bj.newsfastget.view.BottomBarTab;
@@ -31,7 +32,7 @@ import butterknife.BindView;
 import me.yokeyword.eventbusactivityscope.EventBusActivityScope;
 import me.yokeyword.fragmentation.SupportFragment;
 
-public class MainActivity extends SwipeSimpleActivity
+public class MainActivity extends SimpleActivity
         implements NavigationView.OnNavigationItemSelectedListener,BaseMainFragment.OnBackToFirstListener {
 
     @BindView(R.id.toolbar)
