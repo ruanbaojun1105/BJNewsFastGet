@@ -15,6 +15,7 @@
  */
 package com.bj.newsfastget.util;
 
+import com.blankj.utilcode.util.LogUtils;
 import com.yanzhenjie.nohttp.error.TimeoutError;
 import com.yanzhenjie.nohttp.rest.OnResponseListener;
 import com.yanzhenjie.nohttp.rest.Response;
@@ -49,9 +50,10 @@ public class DefaultResponseListener<T> implements OnResponseListener<Result<T>>
         Exception exception = response.getException();
         if (exception instanceof TimeoutError) { // 超时。
             // Toast
+            LogUtils.e("---TimeoutError");
         }
         if (httpListener != null && !abstractRequest.isCanceled())
-            httpListener.onFailed(what);
+            httpListener.onFailed(what,exception);
     }
 
     @Override

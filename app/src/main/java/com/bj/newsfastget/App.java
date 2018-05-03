@@ -24,12 +24,18 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Vibrator;
+import android.support.multidex.MultiDex;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
+
 import com.bj.newsfastget.util.Cockroach;
 import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.SizeUtils;
 import com.blankj.utilcode.util.Utils;
 import com.bumptech.glide.Glide;
+import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
+import com.github.hiteshsondhi88.libffmpeg.LoadBinaryResponseHandler;
+import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
 import com.yanzhenjie.nohttp.InitializationConfig;
 import com.yanzhenjie.nohttp.Logger;
 import com.yanzhenjie.nohttp.NoHttp;
@@ -67,7 +73,7 @@ public class App extends android.app.Application {
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
-//        MultiDex.install(base);
+        MultiDex.install(base);
     }
 
 
@@ -93,6 +99,29 @@ public class App extends android.app.Application {
                 });
             }
         });
+        FFmpeg ffmpeg = FFmpeg.getInstance(this);
+        try {
+            ffmpeg.loadBinary(new LoadBinaryResponseHandler() {
+
+                @Override
+                public void onStart() {}
+
+                @Override
+                public void onFailure() {
+                    Log.e("--"," ffmpeg onFailure");
+                }
+
+                @Override
+                public void onSuccess() {
+                    Log.e("--"," ffmpeg onSuccess");
+                }
+
+                @Override
+                public void onFinish() {}
+            });
+        } catch (FFmpegNotSupportedException e) {
+            // Handle if FFmpeg is not supported by device
+        }
         mVibrator = (Vibrator) mContext.getSystemService(Service.VIBRATOR_SERVICE);
         Utils.init(this);
         InitializationConfig configt = InitializationConfig.newBuilder(mContext)

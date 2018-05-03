@@ -3,20 +3,22 @@ package com.bj.newsfastget.util;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
 
+import com.alibaba.fastjson.JSON;
 import com.bj.newsfastget.App;
 import com.yanzhenjie.nohttp.NoHttp;
-import com.yanzhenjie.nohttp.RequestMethod;
 import com.yanzhenjie.nohttp.rest.AsyncRequestExecutor;
 import com.yanzhenjie.nohttp.rest.OnResponseListener;
 import com.yanzhenjie.nohttp.rest.Request;
 import com.yanzhenjie.nohttp.rest.Response;
-import com.yanzhenjie.nohttp.rest.StringRequest;
 import com.yanzhenjie.nohttp.rest.SyncRequestExecutor;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.CRC32;
@@ -131,11 +133,71 @@ public class Http {
     }
 
     private static Response get(String s) {
-        StringRequest req = new StringRequest(s, RequestMethod.POST);
+        StringRequest req = new StringRequest(s);
         return SyncRequestExecutor.INSTANCE.execute(req);
     }
 
-    private static void get(String jrttSearchUrl, Map<String, String> params, DefaultResponseListener httpResponseHandler) {
+    private static void get(String jrttSearchUrl, Map<String, String> params, final HttpResponseHandler handler) {
+        if (params != null && params.size() > 0) {
+            jrttSearchUrl = jrttSearchUrl + "?" + mapToQueryString(params);
+        }
+        final StringRequest request = new StringRequest(jrttSearchUrl);
+        AsyncRequestExecutor.INSTANCE.execute(0,request,new DefaultResponseListener(new HttpListener() {
+            @Override
+            public void onSucceed(int what, Result t) {
+                try {
+                    Object apiResponse = getRestApiResponse(t.getResult().toString(), handler.clazz);
+                    handler.sendSuccessMessage(apiResponse);
+                } catch (Exception e) {
+                    handler.sendFailureMessage(request, e);
+                }
+            }
+
+            @Override
+            public void onFailed(int what,Exception e) {
+                handler.sendFailureMessage(request, e);
+            }
+
+            @Override
+            public void onFinish(int what) {
+
+            }
+        }, request));
+    }
+
+    private static final String UTF_8 = "UTF-8";
+    public static String mapToQueryString(Map<String, String> map) {
+        StringBuilder string = new StringBuilder();
+        /*if(map.size() > 0) {
+            string.append("?");
+        }*/
+        try {
+            for (Map.Entry<String, String> entry : map.entrySet()) {
+                string.append(entry.getKey());
+                string.append("=");
+                string.append(URLEncoder.encode(entry.getValue(), UTF_8));
+                string.append("&");
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return string.toString();
+    }
+
+    private static Object getRestApiResponse(String responseBody, Class clazz) throws Exception {
+        if (!isJsonString(responseBody)) {
+            throw new Exception("server response not json string (response = " + responseBody + ")");
+        }
+        Object apiResponse = JSON.parseObject(responseBody, clazz);
+        if (apiResponse == null) {
+            throw new Exception("server error (response = " + responseBody + ")");
+        }
+
+        return apiResponse;
+    }
+
+    private static boolean isJsonString(String responseBody) {
+        return !TextUtils.isEmpty(responseBody) && (responseBody.startsWith("{") && responseBody.endsWith("}"));
     }
 
     /**
@@ -145,9 +207,8 @@ public class Http {
      * @param offset
      * @param count
      * @param tab
-     * @param httpResponseHandler
      */
-    public static void getJRTTList(String keyWord, int offset, int count, int tab, DefaultResponseListener httpResponseHandler) {
+    public static void getJRTTList(String keyWord, int offset, int count, int tab, HttpResponseHandler httpListener) {
         if (!isNetAvailable()) {
             return;
         }
@@ -158,19 +219,18 @@ public class Http {
         params.put("autoload", String.valueOf(false));
         params.put("count", String.valueOf(count));
         params.put("cur_tab", String.valueOf(tab));
-        get(JRTT_SEARCH_URL, params, httpResponseHandler);
+        get(JRTT_SEARCH_URL, params, httpListener);
     }
 
 
     /**
      * SoHu json数据
      *
-     * @param tagId               #67121 狼人杀标签的id
+     * @param tagId               #67121 标签的id
      * @param pNo                 page页数
      * @param pSize               一页的数量
-     * @param httpResponseHandler
      */
-    public static void getSHList(String tagId, int pNo, int pSize, DefaultResponseListener httpResponseHandler) {
+    public static void getSHList(String tagId, int pNo, int pSize, HttpResponseHandler httpListener) {
         if (!isNetAvailable()) {
             return;
         }
@@ -178,7 +238,7 @@ public class Http {
         params.put("tagId", tagId);
         params.put("pno", String.valueOf(pNo));
         params.put("psize", String.valueOf(pSize));
-        get(SH_SERACH_URL, params, httpResponseHandler);
+        get(SH_SERACH_URL, params, httpListener);
     }
 
 

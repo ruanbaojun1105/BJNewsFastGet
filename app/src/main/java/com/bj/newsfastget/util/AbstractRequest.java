@@ -1,7 +1,5 @@
 package com.bj.newsfastget.util;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.yanzhenjie.nohttp.Headers;
 import com.yanzhenjie.nohttp.RequestMethod;
 import com.yanzhenjie.nohttp.rest.Request;
@@ -10,20 +8,17 @@ import com.yanzhenjie.nohttp.rest.StringRequest;
 
 public abstract class AbstractRequest<T> extends Request<Result<T>> {
 
-    private Class<T> clazz;
 
-    public AbstractRequest(String url, Class<T> clazz) {
+    public AbstractRequest(String url) {
         super(url, RequestMethod.GET);
-        this.clazz = clazz;
     }
 
-    public AbstractRequest(String url, RequestMethod requestMethod, Class<T> clazz) {
+    public AbstractRequest(String url, RequestMethod requestMethod) {
         super(url, requestMethod);
-        this.clazz = clazz;
     }
 
     // 这个方法由继承的子类去实现，解析成我们真正想要的数据类型。
-    protected abstract T getResult(String data);
+    protected abstract T getResult(String data) throws Exception;
 
     @Override
     public Result<T> parseResponse(Headers headers, byte[] body) throws Exception {

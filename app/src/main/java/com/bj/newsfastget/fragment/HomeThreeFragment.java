@@ -27,7 +27,7 @@ public class HomeThreeFragment  extends SwipeSimpleFragment {
 
     @Override
     protected int getLayoutId() {
-        return R.layout.fragment_home1;
+        return R.layout.fragment_home2;
     }
 
     @Override

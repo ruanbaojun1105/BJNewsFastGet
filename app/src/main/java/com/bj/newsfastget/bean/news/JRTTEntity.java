@@ -1,5 +1,7 @@
 package com.bj.newsfastget.bean.news;
 
+import com.alibaba.fastjson.annotation.JSONField;
+
 import java.util.List;
 
 
@@ -301,7 +303,8 @@ public class JRTTEntity extends BaseEntity{
         private int ban_comment;
         private int show_play_effective_count;
         private boolean single_mode;
-        @com.google.gson.annotations.SerializedName("abstract")
+//        @com.google.gson.annotations.SerializedName("abstract")
+        @JSONField(name = "abstract")
         private String abstractX;
         private String display_title;
         private String media_avatar_url;
@@ -856,7 +859,7 @@ public class JRTTEntity extends BaseEntity{
 
         public static class HighlightBean {
             private List<?> source;
-            @com.google.gson.annotations.SerializedName("abstract")
+            @JSONField(name = "abstract")
             private List<?> abstractX;
             private List<List<Integer>> title;
 

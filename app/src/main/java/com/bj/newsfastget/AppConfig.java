@@ -33,9 +33,14 @@ public class AppConfig {
     public String APP_PATH_ROOT;
 
     private AppConfig() {
-        preferences = App.getInstance().getSharedPreferences("HWXSharedPreferences_balancing", Context.MODE_PRIVATE);
-        APP_PATH_ROOT = getRootPath(App.getContext()).getAbsolutePath() + File.separator + "Newsfastget";
+        preferences = App.getInstance().getSharedPreferences("A-Newsfastget_app", Context.MODE_PRIVATE);
+        APP_PATH_ROOT = getRootPath(App.getContext()).getAbsolutePath() + File.separator + "A-Newsfastget";
     }
+
+    public String getAPP_PATH_ROOT() {
+        return APP_PATH_ROOT;
+    }
+
     /**
      * 得到SD卡根目录.
      */

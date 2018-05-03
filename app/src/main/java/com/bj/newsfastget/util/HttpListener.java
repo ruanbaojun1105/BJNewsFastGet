@@ -7,7 +7,7 @@ public interface HttpListener<T> {
 
     void onSucceed(int what, Result<T> t);
 
-    void onFailed(int what);
+    void onFailed(int what,Exception e);
 
     void onFinish(int what);
 

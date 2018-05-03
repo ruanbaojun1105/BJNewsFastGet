@@ -6,7 +6,7 @@ public abstract class SimpleHttpListener<T> implements HttpListener<T> {
     }
 
     @Override
-    public void onFailed(int what) {
+    public void onFailed(int what ,Exception e) {
 
     }
 
