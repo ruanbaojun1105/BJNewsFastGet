@@ -11,13 +11,11 @@ import android.util.Log;
 
 public class UiMessageListener extends MessageListener {
 
-    private Handler mainHandler;
 
     private static final String TAG = "UiMessageListener";
 
-    public UiMessageListener(Handler mainHandler) {
+    public UiMessageListener() {
         super();
-        this.mainHandler = mainHandler;
     }
 
     /**
@@ -29,8 +27,8 @@ public class UiMessageListener extends MessageListener {
      */
     @Override
     public void onSynthesizeDataArrived(String utteranceId, byte[] data, int progress) {
-        // sendMessage("onSynthesizeDataArrived");
-        mainHandler.sendMessage(mainHandler.obtainMessage(UI_CHANGE_SYNTHES_TEXT_SELECTION, progress, 0));
+        //sendMessage("onSynthesizeDataArrived--utteranceId"+utteranceId+"--progress--"+progress);
+//        mainHandler.sendMessage(mainHandler.obtainMessage(UI_CHANGE_SYNTHES_TEXT_SELECTION, progress, 0));
     }
 
     /**
@@ -42,8 +40,7 @@ public class UiMessageListener extends MessageListener {
      */
     @Override
     public void onSpeechProgressChanged(String utteranceId, int progress) {
-        // sendMessage("onSpeechProgressChanged");
-        mainHandler.sendMessage(mainHandler.obtainMessage(UI_CHANGE_INPUT_TEXT_SELECTION, progress, 0));
+         //sendMessage("onSpeechProgressChanged--utteranceId"+utteranceId+"--progress--"+progress);
     }
 
     protected void sendMessage(String message) {
@@ -58,12 +55,5 @@ public class UiMessageListener extends MessageListener {
 
     protected void sendMessage(String message, boolean isError, int action) {
         super.sendMessage(message, isError);
-        if (mainHandler != null) {
-            Message msg = Message.obtain();
-            msg.what = action;
-            msg.obj = message + "\n";
-            mainHandler.sendMessage(msg);
-            Log.i(TAG, message);
-        }
     }
 }

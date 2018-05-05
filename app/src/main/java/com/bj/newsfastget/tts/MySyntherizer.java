@@ -25,7 +25,7 @@ public class MySyntherizer implements MainHandlerConstant {
 
     protected SpeechSynthesizer mSpeechSynthesizer;
     protected Context context;
-    protected Handler mainHandler;
+    private String newText="";
 
     private static final String TAG = "NonBlockSyntherizer";
 
@@ -33,20 +33,24 @@ public class MySyntherizer implements MainHandlerConstant {
 
     private boolean isCheckFile = true;
 
-    public MySyntherizer(Context context, InitConfig initConfig, Handler mainHandler) {
-        this(context, mainHandler);
+    public MySyntherizer(Context context, InitConfig initConfig) {
+        this(context);
         init(initConfig);
     }
 
 
-    protected MySyntherizer(Context context, Handler mainHandler) {
+    protected MySyntherizer(Context context) {
         if (isInitied) {
             // SpeechSynthesizer.getInstance() 不要连续调用
             throw new RuntimeException("MySynthesizer 类里面 SpeechSynthesizer还未释放，请勿新建一个新类");
         }
         this.context = context;
-        this.mainHandler = mainHandler;
         isInitied = true;
+    }
+
+
+    public String getNewText() {
+        return newText;
     }
 
     /**
@@ -122,6 +126,7 @@ public class MySyntherizer implements MainHandlerConstant {
      * @return
      */
     public int synthesize(String text) {
+        newText=text;
         return mSpeechSynthesizer.synthesize(text);
     }
 
@@ -131,15 +136,18 @@ public class MySyntherizer implements MainHandlerConstant {
 
     public int batchSpeak(List<Pair<String, String>> texts) {
         List<SpeechSynthesizeBag> bags = new ArrayList<SpeechSynthesizeBag>();
+        StringBuilder builder=new StringBuilder(0);
         for (Pair<String, String> pair : texts) {
             SpeechSynthesizeBag speechSynthesizeBag = new SpeechSynthesizeBag();
             speechSynthesizeBag.setText(pair.first);
+            builder.append(pair.first);
             if (pair.second != null) {
                 speechSynthesizeBag.setUtteranceId(pair.second);
             }
             bags.add(speechSynthesizeBag);
 
         }
+        newText=builder.toString();
         return mSpeechSynthesizer.batchSpeak(bags);
     }
 
@@ -200,12 +208,5 @@ public class MySyntherizer implements MainHandlerConstant {
 
     protected void sendToUiThread(int action, String message) {
         Log.i(TAG, message);
-        if (mainHandler == null) { // 可以不依赖mainHandler
-            return;
-        }
-        Message msg = Message.obtain();
-        msg.what = action;
-        msg.obj = message + "\n";
-        mainHandler.sendMessage(msg);
     }
 }

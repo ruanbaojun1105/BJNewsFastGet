@@ -13,7 +13,6 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.bj.newsfastget.R;
-import com.bj.newsfastget.bean.TabSelectedEvent;
 import com.bj.newsfastget.fragment.BaseMainFragment;
 import com.bj.newsfastget.fragment.HomeFirstFragment;
 import com.bj.newsfastget.fragment.HomeFourFragment;
@@ -23,13 +22,14 @@ import com.bj.newsfastget.fragment.MainFragmentThree;
 import com.bj.newsfastget.fragment.MainFragmentTwo;
 import com.bj.newsfastget.fragment.HomeThreeFragment;
 import com.bj.newsfastget.fragment.HomeTwoFragment;
+import com.bj.newsfastget.simple.EventComm;
 import com.bj.newsfastget.simple.SimpleActivity;
-import com.bj.newsfastget.simple.SwipeSimpleActivity;
 import com.bj.newsfastget.view.BottomBar;
 import com.bj.newsfastget.view.BottomBarTab;
 
+import org.greenrobot.eventbus.EventBus;
+
 import butterknife.BindView;
-import me.yokeyword.eventbusactivityscope.EventBusActivityScope;
 import me.yokeyword.fragmentation.SupportFragment;
 
 public class MainActivity extends SimpleActivity
@@ -65,8 +65,7 @@ public class MainActivity extends SimpleActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                EventBus.getDefault().post(new EventComm("RecyclerToTop",0));
             }
         });
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -136,28 +135,18 @@ public class MainActivity extends SimpleActivity
                 if (count == 1) {
                     // 在FirstPagerFragment中接收, 因为是嵌套的孙子Fragment 所以用EventBus比较方便
                     // 主要为了交互: 重选tab 如果列表不在顶部则移动到顶部,如果已经在顶部,则刷新
-                    EventBusActivityScope.getDefault(MainActivity.this).post(new TabSelectedEvent(position));
+                    EventBus.getDefault().post(new EventComm("TabSelectedEvent",position));
                 }
             }
         });
     }
 
-    @Override
-    public void onBackPressedSupport() {
-//        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-//        if (drawer.isDrawerOpen(GravityCompat.START)) {
-//            drawer.closeDrawer(GravityCompat.START);
-//        } else {
-//            super.onBackPressedSupport();
-//        }
+    public boolean isDrawerOpen() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START);
+            return true;
         } else {
-            if (getSupportFragmentManager().getBackStackEntryCount() > 1) {
-                pop();
-            } else {
-                ActivityCompat.finishAfterTransition(this);
-            }
+            return false;
         }
     }
 

@@ -30,8 +30,8 @@ public class NonBlockSyntherizer extends MySyntherizer {
 //        return syntherizer;
 //    }
 
-    public NonBlockSyntherizer(Context context, InitConfig initConfig, Handler mainHandler) {
-        super(context, mainHandler);
+    public NonBlockSyntherizer(Context context, InitConfig initConfig) {
+        super(context);
         initThread();
         runInHandlerThread(INIT, initConfig);
     }

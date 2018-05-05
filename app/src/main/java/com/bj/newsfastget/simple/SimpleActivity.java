@@ -51,7 +51,6 @@ public abstract class SimpleActivity extends SupportActivity implements EasyPerm
         super.onCreate(savedInstanceState);
         setContentView(getLayout());
         mUnBinder = ButterKnife.bind(this);
-        EventBus.getDefault().register(this);
         mContext = this;
         initImmersionBar();
         initEventAndData();
@@ -128,10 +127,6 @@ public abstract class SimpleActivity extends SupportActivity implements EasyPerm
         mUnBinder.unbind();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -148,13 +143,14 @@ public abstract class SimpleActivity extends SupportActivity implements EasyPerm
     @Override
     public void onStart() {
         super.onStart();
+        EventBus.getDefault().register(this);
     }
 
-//    @Override
-//    public void onStop() {
-//        super.onStop();
-//        EventBus.getDefault().unregister(this);
-//    }
+    @Override
+    public void onStop() {
+        super.onStop();
+        EventBus.getDefault().unregister(this);
+    }
 
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
     public void onMessageEvent(Boolean event) {

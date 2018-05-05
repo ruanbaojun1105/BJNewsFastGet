@@ -4,7 +4,13 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.baidu.tts.client.SpeechError;
+import com.bj.newsfastget.AppConfig;
 import com.bj.newsfastget.fragment.HomeTwoFragment;
+import com.bj.newsfastget.simple.EventComm;
+import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
+import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -38,7 +44,6 @@ public class FileSaveListener extends UiMessageListener {
     /**
      * ttsFile 文件流
      */
-    private FileOutputStream ttsFileOutputStream;
 
     /**
      * ttsFile 文件buffer流
@@ -48,34 +53,39 @@ public class FileSaveListener extends UiMessageListener {
     private static final String TAG = "FileSaveListener";
 
 
-    public FileSaveListener(Handler mainHandler, String destDir) {
-        super(mainHandler);
+    public FileSaveListener( String destDir) {
+        super();
         this.destDir = destDir;
     }
 
     @Override
     public void onSynthesizeStart(String utteranceId) {
-        String filename = baseName + utteranceId + ".pcm";
-        // 保存的语音文件是 16K采样率 16bits编码 单声道 pcm文件。
-        ttsFile = new File(destDir, filename);
-        Log.i(TAG, "try to write audio file to " + ttsFile.getAbsolutePath());
-        try {
-            if (ttsFile.exists()) {
-                ttsFile.delete();
+        String[] data=utteranceId.split("-");
+        final String time=data[0];
+        int index=Integer.parseInt(data[1]);
+        final int count=Integer.parseInt(data[2]);
+        if (index==1) {
+            String filename = baseName + utteranceId + ".pcm";
+            // 保存的语音文件是 16K采样率 16bits编码 单声道 pcm文件。
+            ttsFile = new File(destDir, filename);
+            Log.i(TAG, "try to write audio file to " + ttsFile.getAbsolutePath());
+            try {
+                if (ttsFile.exists()) {
+                    ttsFile.delete();
+                }
+                ttsFile.createNewFile();
+                // 创建FileOutputStream对象
+                FileOutputStream ttsFileOutputStream = new FileOutputStream(ttsFile);
+                // 创建BufferedOutputStream对象
+                ttsFileBufferedOutputStream = new BufferedOutputStream(ttsFileOutputStream);
+            } catch (IOException e) {
+                // 请自行做错误处理
+                e.printStackTrace();
+                sendMessage("创建文件失败:" + destDir + "/" + filename);
+                throw new RuntimeException(e);
             }
-            ttsFile.createNewFile();
-            // 创建FileOutputStream对象
-            FileOutputStream ttsFileOutputStream = new FileOutputStream(ttsFile);
-            // 创建BufferedOutputStream对象
-            ttsFileBufferedOutputStream = new BufferedOutputStream(ttsFileOutputStream);
-        } catch (IOException e) {
-            // 请自行做错误处理
-            e.printStackTrace();
-            sendMessage("创建文件失败:" + destDir + "/" + filename);
-            throw new RuntimeException(e);
+            sendMessage("创建文件成功:" + destDir + "/" + filename);
         }
-        sendMessage("创建文件成功:" + destDir + "/" + filename);
-
     }
 
     /**
@@ -118,36 +128,35 @@ public class FileSaveListener extends UiMessageListener {
      * 关闭流，注意可能stop导致该方法没有被调用
      */
     private void close(String utteranceId) {
-        if (ttsFileBufferedOutputStream != null) {
-            try {
-                ttsFileBufferedOutputStream.flush();
-                ttsFileBufferedOutputStream.close();
-                ttsFileBufferedOutputStream = null;
-            } catch (Exception e2) {
-                e2.printStackTrace();
+        String[] data = utteranceId.split("-");
+        final String time = data[0];
+        int index = Integer.parseInt(data[1]);
+        final int count = Integer.parseInt(data[2]);
+        if (count == index) {
+            if (ttsFileBufferedOutputStream != null) {
+                try {
+                    ttsFileBufferedOutputStream.flush();
+                    ttsFileBufferedOutputStream.close();
+                    ttsFileBufferedOutputStream = null;
+                } catch (Exception e2) {
+                    e2.printStackTrace();
+                }
             }
-        }
-        if (ttsFileOutputStream != null) {
+            sendMessage("关闭文件成功");
+            String filename = baseName + time+"-"+1+"-"+count+".pcm";
+            String filename1 = baseName + time+"-"+1+"-"+count+ ".wav";
+            ConvertPCMtoMP3 cpm = new ConvertPCMtoMP3();
             try {
-                ttsFileOutputStream.close();
-                ttsFileOutputStream = null;
-            } catch (IOException e) {
+                //pcm转换MP3
+                cpm.convertAudioFiles(destDir + "/" + filename, destDir + "/" + filename1);
+                //ChangePcmToWav.convertAudioFiles(destDir+"/"+filename,destDir+"/"+filename1);
+                sendMessage("转换文件成功,开始转换视频");
+//            String test = AppConfig.getInstance().getAPP_PATH_ROOT() + "/music/test.mp3";
+                EventBus.getDefault().post(new EventComm(100, destDir + "/" + filename1, utteranceId));
+            } catch (Exception e) {
                 e.printStackTrace();
+                sendMessage("转换文件失败");
             }
-        }
-        sendMessage("关闭文件成功");
-        String filename = baseName + utteranceId + ".pcm";
-        String filename1 = baseName + utteranceId + ".mp3";
-        ConvertPCMtoMP3 cpm = new ConvertPCMtoMP3();
-        try {
-            //pcm转换MP3
-            cpm.convertAudioFiles(destDir+"/"+filename,destDir+"/"+filename1);
-//            ChangePcmToWav.convertAudioFiles(destDir+"/"+filename,destDir+"/"+filename1);
-            sendMessage("转换文件成功,开始转换视频");
-            HomeTwoFragment.toChangeVideo(destDir+"/"+filename1);
-        } catch (Exception e) {
-            e.printStackTrace();
-            sendMessage("转换文件失败");
         }
     }
 }

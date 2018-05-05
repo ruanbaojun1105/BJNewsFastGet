@@ -1,21 +1,20 @@
 package com.bj.newsfastget.fragment;
 
 import android.Manifest;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Layout;
-import android.text.Spannable;
-import android.text.SpannableString;
 import android.text.TextUtils;
-import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.util.Pair;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.baidu.tts.chainofresponsibility.logger.LoggerProxy;
 import com.baidu.tts.client.SpeechSynthesizer;
@@ -25,7 +24,9 @@ import com.bj.newsfastget.App;
 import com.bj.newsfastget.AppConfig;
 import com.bj.newsfastget.BuildConfig;
 import com.bj.newsfastget.R;
+import com.bj.newsfastget.activity.MainActivity;
 import com.bj.newsfastget.adapter.InfoAdapter;
+import com.bj.newsfastget.simple.EventComm;
 import com.bj.newsfastget.simple.SwipeSimpleFragment;
 import com.bj.newsfastget.tts.AutoCheck;
 import com.bj.newsfastget.tts.FileSaveListener;
@@ -33,27 +34,38 @@ import com.bj.newsfastget.tts.InitConfig;
 import com.bj.newsfastget.tts.MainHandlerConstant;
 import com.bj.newsfastget.tts.MySyntherizer;
 import com.bj.newsfastget.tts.NonBlockSyntherizer;
+import com.bj.newsfastget.tts.OnCallBack;
 import com.bj.newsfastget.tts.UiMessageListener;
 import com.bj.newsfastget.util.FileUtil;
 import com.bj.newsfastget.util.OfflineResource;
 import com.blankj.utilcode.util.LogUtils;
-import com.blankj.utilcode.util.SnackbarUtils;
 import com.chad.library.adapter.base.animation.AlphaInAnimation;
 import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
 import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
+import com.github.hiteshsondhi88.libffmpeg.LoadBinaryResponseHandler;
 import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
+import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
+
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import VideoHandle.EpDraw;
 import VideoHandle.EpEditor;
+import VideoHandle.EpVideo;
 import VideoHandle.OnEditorListener;
 import butterknife.BindView;
+import butterknife.ButterKnife;
 import butterknife.OnClick;
+import butterknife.Unbinder;
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -64,7 +76,7 @@ import pub.devrel.easypermissions.EasyPermissions;
  * @email 401763159@qq.com
  * @text
  */
-public class HomeTwoFragment extends SwipeSimpleFragment  implements MainHandlerConstant {
+public class HomeTwoFragment extends SwipeSimpleFragment implements MainHandlerConstant {
 
     @BindView(R.id.text)
     TextView text;
@@ -77,7 +89,6 @@ public class HomeTwoFragment extends SwipeSimpleFragment  implements MainHandler
     @BindView(R.id.recycler)
     RecyclerView recycler;
     private InfoAdapter itemAdapter;
-    protected Handler mainHandler;
 
     // ================== 初始化参数设置开始 ==========================
     /**
@@ -134,17 +145,6 @@ public class HomeTwoFragment extends SwipeSimpleFragment  implements MainHandler
         recycler.setLayoutManager(layoutManager);
         recycler.setHasFixedSize(true);
         recycler.setAdapter(itemAdapter);
-        mainHandler = new Handler() {
-            /*
-             * @param msg
-             */
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                handle(msg);
-            }
-
-        };
         checkPer();
     }
 
@@ -159,34 +159,22 @@ public class HomeTwoFragment extends SwipeSimpleFragment  implements MainHandler
         if (EasyPermissions.hasPermissions(_mActivity, perms)) {
             String itemPath = AppConfig.getInstance().getAPP_PATH_ROOT() + "/images";
             FileUtil.copyFilesFassets(_mActivity, "images", itemPath);
-            itemAdapter.addData(0, "图片转存完毕");
+
+            String itemPath1 = AppConfig.getInstance().getAPP_PATH_ROOT() + "/music";
+            FileUtil.copyFilesFassets(_mActivity, "music", itemPath1);
+
+            String itemPath2 = AppConfig.getInstance().getAPP_PATH_ROOT() + "/video";
+            FileUtil.copyFilesFassets(_mActivity, "video", itemPath2);
+
+            itemAdapter.addData(0, "图片和音视频转存完毕");
             initialTtsFile(); // 初始化TTS引擎
+            loadFFMpegBinary();
         } else {
             EasyPermissions.requestPermissions(_mActivity,
                     "请不要拒绝我们善意的权限请求,谢谢.\n\n需要赋予以下权限才能保证程序的正常运行:\n\n1.SD卡写入与读取", 100, perms);
         }
     }
 
-    protected void handle(Message msg) {
-        int what = msg.what;
-        switch (what) {
-            case PRINT:
-                LogUtils.e(msg);
-                break;
-            case UI_CHANGE_INPUT_TEXT_SELECTION:
-                break;
-            case UI_CHANGE_SYNTHES_TEXT_SELECTION:
-                SpannableString colorfulText = new SpannableString("test测试");
-                if (msg.arg1 <= colorfulText.toString().length()) {
-                    colorfulText.setSpan(new ForegroundColorSpan(Color.GRAY), 0, msg.arg1, Spannable
-                            .SPAN_EXCLUSIVE_EXCLUSIVE);
-                    LogUtils.e(colorfulText);
-                }
-                break;
-            default:
-                break;
-        }
-    }
 
     @OnClick({R.id.button1, R.id.button2, R.id.button3})
     public void onViewClicked(View view) {
@@ -194,45 +182,259 @@ public class HomeTwoFragment extends SwipeSimpleFragment  implements MainHandler
             case R.id.button1:
                 break;
             case R.id.button2:
-                itemAdapter.setNewData(new ArrayList<String>());
-                toChangeVideo(null);
+                speak("请不要拒绝我们善意的权限请求,谢谢.需要赋予以下权限才能保证程序的正常运行:1.SD卡写入与读取");
                 break;
             case R.id.button3:
 //                speak("");
-                synthesize("");
+//                String text="众所周知美国作为世界第一大军事强国111,众所周知美国作为世界第一大军事强国222,众所周知美国作为世界第一大军事强国333";
+                String text="众所周知，美国作为世界第一大军事强国，凭借强大的战斗力在100多个国家拥有自己的大使馆，每一个大使馆内部都有一批武装实弹的美国大兵，充当大使馆的保护神，一旦遇到危险的时候，他们就会第一时间进行出击！"+
+                        "然而有一个国家内的美国大使馆士兵却没有枪，那就是中国！曾经驻华的美国士兵也是统一配置先进作战武器，但是因为一件事情的发生，导致到目前为止都禁止携带武器枪支，否则将会遭受到解放军的强势驱逐。究竟怎么回事？" +
+                        "阮宝军也不知道啊去你妈的众所周知美国作为世界第一大军事强国111,众所周知美国作为世界第一大军事强国222,众所周知美国作为世界第一大军事强国333";
+                newSyntWork(text,String.valueOf(System.currentTimeMillis()));
 //                batchSpeak();
                 break;
         }
     }
 
-    protected void toPrint(String str) {
-        Message msg = Message.obtain();
-        msg.obj = str;
-        mainHandler.sendMessage(msg);
+    private void newSyntWork(final String text, final String time) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                //                synthesize("");//合成
+                char[] arr=text.toCharArray();
+                List<Pair<String, String>> texts = new ArrayList<Pair<String, String>>();
+                StringBuilder builder=new StringBuilder(0);
+                int pp=1;
+                int len=(arr.length/150)+(arr.length%150>0?1:0);
+                for (int i = 1; i <=arr.length; i++) {
+                    builder.append(arr[i-1]);
+                    if (i%150==0){
+                        texts.add(new Pair<String, String>(builder.toString(), time+"-"+pp+"-"+len));
+                        builder.setLength(0);
+                        pp++;
+                    }
+                }
+                if (builder.length()>0){
+                    texts.add(new Pair<String, String>(builder.toString(),  time+"-"+pp+"-"+len));
+                    builder.setLength(0);
+                }
+                int result = synthesizer.batchSpeak(texts);
+                checkResult(result, "batchSpeak");
+            }
+        }).start();
     }
 
-    private void print(Message msg) {
-        String message = (String) msg.obj;
-        if (message != null) {
-            itemAdapter.addData(0,message);
+    protected void toPrint(final String str) {
+        LogUtils.e("topring---" + str);
+        recycler.post(new Runnable() {
+            @Override
+            public void run() {
+                itemAdapter.addData(0, "topring---" + str);
+                recycler.scrollToPosition(0);
+            }
+        });
+    }
+
+    private void loadFFMpegBinary() {
+        try {
+            FFmpeg ffmpeg = FFmpeg.getInstance(_mActivity);
+            ffmpeg.loadBinary(new LoadBinaryResponseHandler() {
+                @Override
+                public void onFailure() {
+                    itemAdapter.addData(0, "onfail load ff");
+                }
+
+                @Override
+                public void onSuccess() {
+                }
+            });
+        } catch (FFmpegNotSupportedException e) {
+            itemAdapter.addData(0, e.toString());
         }
     }
 
+    private void execFFmpegBinary(final String[] command, final OnCallBack callBack) {
+        try {
+            FFmpeg ffmpeg = FFmpeg.getInstance(_mActivity);
+            ffmpeg.execute(command, new ExecuteBinaryResponseHandler() {
+                @Override
+                public void onFailure(final String s) {
+                    recycler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            itemAdapter.addData(0, "comm:"+command+"\n---FAILED with output : " + s);
+                            recycler.scrollToPosition(0);
+                        }
+                    });
+                    LogUtils.e("FAILED with output : " + s);
+                    if (callBack != null)
+                        callBack.onFail();
+                }
 
-    public static void toChangeVideo(final String wavPath) {
+                @Override
+                public void onSuccess(final String s) {
+                    recycler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            itemAdapter.addData(0, "SUCCESS with output : " + s);
+                            recycler.scrollToPosition(0);
+                        }
+                    });
+                    if (callBack != null)
+                        callBack.onSucc();
+                }
+
+                @Override
+                public void onProgress(final String s) {
+                    Log.d(TAG, "Started command : ffmpeg " + command.toString());
+                    recycler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            itemAdapter.addData(0, "progress : " + s);
+                            recycler.scrollToPosition(0);
+                        }
+                    });
+                }
+
+                @Override
+                public void onStart() {
+                    recycler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            itemAdapter.addData(0, "Started command : ffmpeg " + command.toString());
+                            recycler.scrollToPosition(0);
+                        }
+                    });
+                }
+
+                @Override
+                public void onFinish() {
+                    recycler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            itemAdapter.addData(0, "Finished command : ffmpeg " + command.toString());
+                            recycler.scrollToPosition(0);
+                        }
+                    });
+                }
+            });
+        } catch (final FFmpegCommandAlreadyRunningException e) {
+            // do nothing for now
+            recycler.post(new Runnable() {
+                @Override
+                public void run() {
+                    itemAdapter.addData(0, "FFmpegCommandAlreadyRunningException : " + e.toString());
+                    recycler.scrollToPosition(0);
+                }
+            });
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(final EventComm event) {
+        if (event.getCode() == 100) {
+            String[] data=event.getObject2().toString().split("-");
+            final String time=data[0];
+//            String index=data[1];
+            final int count=Integer.parseInt(data[2]);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                       //AppConfig.getInstance().getAPP_PATH_ROOT()+"/baiduTTS/output-"+i+"-"+count+".wav"
+                        /*String wavListFile =AppConfig.getInstance().getAPP_PATH_ROOT() + "/wav" + time + ".txt";
+                        StringBuilder builder=new StringBuilder(0);
+                        for (int i = 1; i <=count ; i++) {
+                            //混合拼接
+                            //builder.append("-i "+AppConfig.getInstance().getAPP_PATH_ROOT()+"/baiduTTS/output-"+time+"-"+i+"-"+count+".wav ");
+                            builder.append(AppConfig.getInstance().getAPP_PATH_ROOT()+"/baiduTTS/output-"+time+"-"+i+"-"+count+".wav|");
+                        }
+                        FileUtil.contentToTxt(wavListFile, builder.toString());*/
+                        toChangeVideo((String) event.getObject(),toCreatSrt(time),time,count);
+                    }
+                }).start();
+        }
+        if ("TabSelectedEvent".equals(event.getType())){
+            int po= (int) event.getObject();
+            if (po== MainActivity.SECOND)
+                return;
+        }
+        if ("RecyclerToTop".equals(event.getType())){
+            recycler.scrollToPosition(0);
+        }
+    }
+
+    /**
+     * 自动生成字幕
+     * @param time
+     * @return
+     */
+    private String toCreatSrt(String time) {
+        String srtFile = AppConfig.getInstance().getAPP_PATH_ROOT() + "/srt" + time + ".srt";
+        String zimu=synthesizer.getNewText();
+        String[] ppp=zimu.split(";|,|\\?|!|，|。|？|！");
+        StringBuilder builder=new StringBuilder(0);
+        for (int i = 0; i < ppp.length; i++) {
+            builder.append((i+1)+"\n");
+            builder.append(getStartTime(i*5));
+            builder.append(" --> ");
+            builder.append(getEndTime(i*5+5));
+            builder.append("\n");
+            builder.append(ppp[i]);
+            builder.append("\n");
+            builder.append("\n");
+        }
+        FileUtil.contentToTxt(srtFile,builder.toString());
+        return srtFile;
+    }
+
+    private String getStartTime(int tempTime) {
+        if(tempTime < 60){
+            return "00:00:"+String.format("%02d",tempTime)+",100";
+        }else if(tempTime > 60 && tempTime < 60*60){
+            String time = String.format("%02d",tempTime/60);
+            String time2 = String.format("%02d",tempTime%60);
+            return "00:"+time+":"+time2+",100";
+        }else if(tempTime >60*60 && tempTime < 60*60*24){
+            String time = String.format("%02d",tempTime/(60*60));
+            int time2 = tempTime%(60*60);
+            String time11 = String.format("%02d",time2/60);
+            String time22 = String.format("%02d",time2%60);
+            return time+":"+time11+":"+time22+",100";
+        }else {
+            return "00:00:00,100";
+        }
+    }
+
+    private String getEndTime(int tempTime) {
+        if(tempTime < 60){
+            return "00:00:"+String.format("%02d",tempTime)+",200";
+        }else if(tempTime > 60 && tempTime < 60*60){
+            String time = String.format("%02d",tempTime/60);
+            String time2 = String.format("%02d",tempTime%60);
+            return "00:"+time+":"+time2+",100";
+        }else if(tempTime >60*60 && tempTime < 60*60*24){
+            String time = String.format("%02d",tempTime/(60*60));
+            int time2 = tempTime%(60*60);
+            String time11 = String.format("%02d",time2/60);
+            String time22 = String.format("%02d",time2%60);
+            return time+":"+time11+":"+time22+",100";
+        }else {
+            return "00:00:00,100";
+        }
+    }
+
+    public void toChangeVideo(final String wavPathData, final String srtFile, final String time, final int count) {
         //ffmpeg -f image2 -i /home/ttwang/images/image%d.jpg  -vcodec libx264 -r 10  tt.mp4
         File file = new File(AppConfig.getInstance().getAPP_PATH_ROOT() + "/video");
         if (!file.exists())
             file.mkdir();
         String cmd;
-        long time=System.currentTimeMillis();
-        final String videoPath=AppConfig.getInstance().getAPP_PATH_ROOT() + "/video/" + time+ ".mp4";
-        final String newVideoPath=AppConfig.getInstance().getAPP_PATH_ROOT() + "/video/new-" + time + ".mp4";
-        StringBuilder imageStr=new StringBuilder(0);
-        for (int i = 1; i < 14; i++) {
-            imageStr.append(AppConfig.getInstance().getAPP_PATH_ROOT() + "/images/image"+i+".jpg ");
-        }
-        cmd="-threads 8 -y -r 25 -i "+ AppConfig.getInstance().getAPP_PATH_ROOT() + "/images/image%d.jpg "+"-vf zoompan=z=1.1:x='if(eq(x,0),100,x-1)':s='480*320' -t 50.0 -vcodec libx264 -r 10 " +videoPath;
+        final String logo = AppConfig.getInstance().getAPP_PATH_ROOT() + "/images/logo.png";
+        final String videoPath = AppConfig.getInstance().getAPP_PATH_ROOT() + "/video/" + time + ".mp4";
+        final String newVideoPath1 = AppConfig.getInstance().getAPP_PATH_ROOT() + "/video/1new-" + time + ".mp4";
+        final String newVideoPath2 = AppConfig.getInstance().getAPP_PATH_ROOT() + "/video/2new-" + time + ".mp4";
+        final String newVideoPath3 = AppConfig.getInstance().getAPP_PATH_ROOT() + "/video/3new-" + time + ".mp4";
+        cmd = "-threads 8 -y -r 16 -i " + AppConfig.getInstance().getAPP_PATH_ROOT() + "/images/image%d.jpg " + "-vf zoompan=z=1.1:x='if(eq(x,0),100,x-1)':s='480*320' -t 65.0 -vcodec libx264 -r 10 " + videoPath;
 //        if (TextUtils.isEmpty(wavPath))
 //            cmd = "-f image2 -i " + AppConfig.getInstance().getAPP_PATH_ROOT() + "/images/image%d.jpg -vcodec libx264 -r 1 " +
 //                    AppConfig.getInstance().getAPP_PATH_ROOT() + "/video/" + System.currentTimeMillis() + ".mp4";
@@ -240,41 +442,176 @@ public class HomeTwoFragment extends SwipeSimpleFragment  implements MainHandler
 //            //-threads 8 -y -r 25 -i /Users/lishengqiang/Documents/temp/2.png -vf zoompan=z=1.1:x='if(eq(x,0),100,x-1)':s='540*960' -t 2.0 /Users/lishengqiang/Documents/temp/output/0.mp4
 //            cmd = "-threads 2 -y -r 10 -i " + wavPath + " -f image2 -framerate 12 -i " + AppConfig.getInstance().getAPP_PATH_ROOT() + "/images/image%d.jpg -vcodec libx264 -r 1 " +
 //                    AppConfig.getInstance().getAPP_PATH_ROOT() + "/video/" + System.currentTimeMillis() + ".mp4";
-        EpEditor.execCmd(cmd, 0, new OnEditorListener() {
+        execCmd(cmd, new OnCallBack() {
             @Override
-            public void onSuccess() {
-                LogUtils.e("onSuccess");
-                //        添加背景音乐
-//参数分别是视频路径，音频路径，输出路径,原始视频音量(1为100%,0.7为70%,以此类推),添加音频音量
-                EpEditor.music(videoPath, wavPath, newVideoPath, 1, 1.0f, new OnEditorListener() {
+            public void onSucc() {
+                execCmd("-i " + wavPathData + " -i " + videoPath + " -preset ultrafast -y " + newVideoPath1, new OnCallBack() {
                     @Override
-                    public void onSuccess() {
-                        LogUtils.e("视频音频合成onSuccess");
+                    public void onSucc() {
+                        EpVideo epVideo=new EpVideo(newVideoPath1);
+                        epVideo.addDraw(new EpDraw(logo,10,10,50,50,false));
+                        EpEditor.OutputOption outputOption = new EpEditor.OutputOption(newVideoPath2);
+                        EpEditor.exec(epVideo, outputOption, new OnEditorListener() {
+                            @Override
+                            public void onSuccess() {
+                                //mkv转mp4
+                                //ffmpeg -i input.mkv -filter_complex [0:v][0:s]overlay[v] -map [v] -map 0:a output.mp4
+                                recycler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        itemAdapter.addData(0, "------------newVideoPath  onSuccess");
+                                        recycler.scrollToPosition(0);
+                                    }
+                                });
+                                //添加字幕ffmpeg -i video.avi -vf subtitles=subtitle.srt out.avi
+                                execCmd("-i "+newVideoPath2+" -vf subtitles="+srtFile+" "+newVideoPath3, new OnCallBack() {
+                                    @Override
+                                    public void onSucc() {
+                                        recycler.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                itemAdapter.addData(0, "------------字幕添加成功");
+                                                recycler.scrollToPosition(0);
+                                            }
+                                        });
+                                    }
+
+                                    @Override
+                                    public void onFail() {
+                                        recycler.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                itemAdapter.addData(0, "------------字幕添加失败");
+                                                recycler.scrollToPosition(0);
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void onFailure() {
+                                recycler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        itemAdapter.addData(0, "------------newVideoPath  onFailure");
+                                        recycler.scrollToPosition(0);
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void onProgress(final float progress) {
+                                recycler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        itemAdapter.addData(0, "------------progress  progress"+progress);
+                                        recycler.scrollToPosition(0);
+                                    }
+                                });
+
+                            }
+                        });
                     }
 
                     @Override
-                    public void onFailure() {
-                        LogUtils.e("视频音频合成onFailure");
-                    }
+                    public void onFail() {
 
-                    @Override
-                    public void onProgress(float progress) {
-                        //这里获取处理进度
                     }
                 });
+//                final String wavPath=AppConfig.getInstance().getAPP_PATH_ROOT() + "/baiduTTS/"+time+".wav";
+                //混音
+                //wavPathData+"-filter_complex amix=inputs="+count+":duration=first:dropout_transition="+count+" -f mp3 "+wavPath
+                //拼接
+                //-i "concat:123.mp3|124.mp3" -acodec copy output.mp3
+//                execCmd("-i concat:"+wavPathData+" -acodec copy "+wavPath, new OnCallBack() {
+//                    @Override
+//                    public void onSucc() {
+//                        //delete wav list
+//                        toPrint("合并wav list 成功~~~~");
+//                    }
+//
+//                    @Override
+//                    public void onFail() {
+//                        toPrint("合并wav list 失败~~~~");
+//                    }
+//                });
             }
-
             @Override
-            public void onFailure() {
-                LogUtils.e("onFailure");
-            }
-
-            @Override
-            public void onProgress(float v) {
-
+            public void onFail() {
             }
         });
-        ////参数分别是图片集合路径,输出路径,输出视频的宽度，输出视频的高度，输出视频的帧率
+//        EpEditor.execCmd(cmd, 0, new OnEditorListener() {
+//            @Override
+//            public void onSuccess() {
+//                LogUtils.e("onSuccess");
+//                //-f s16le -ar 44.1k -ac 2 -i file.pcm file.wav
+//                EpEditor.execCmd("-f s16le -ar 44.1k -ac 2 -i "+wavPath+" "+wav2, 0, new OnEditorListener() {
+//                    @Override
+//                    public void onSuccess() {
+//                        EpEditor.execCmd("-i "+wav2+" -i "+videoPath+" -preset ultrafast -y -max_muxing_queue_size 9999 "+newVideoPath
+//                                , 0, new OnEditorListener() {
+//                                    @Override
+//                                    public void onSuccess() {
+//                                        LogUtils.e("视频音频合成onSuccess");
+//                                    }
+//
+//                                    @Override
+//                                    public void onFailure() {
+//                                        LogUtils.e("视频音频合成onFailure");
+//                                    }
+//
+//                                    @Override
+//                                    public void onProgress(float v) {
+//
+//                                    }
+//                                });
+//                    }
+//
+//                    @Override
+//                    public void onFailure() {
+//
+//                    }
+//
+//                    @Override
+//                    public void onProgress(float v) {
+//
+//                    }
+//                });
+
+        //        添加背景音乐
+//参数分别是视频路径，音频路径，输出路径,原始视频音量(1为100%,0.7为70%,以此类推),添加音频音量
+//                EpEditor.music(videoPath, wavPath, newVideoPath, 1, 1.0f, new OnEditorListener() {
+//                    @Override
+//                    public void onSuccess() {
+//                        LogUtils.e("视频音频合成onSuccess");
+//                    }
+//
+//                    @Override
+//                    public void onFailure() {
+//                        LogUtils.e("视频音频合成onFailure");
+//                    }
+//
+//                    @Override
+//                    public void onProgress(float progress) {
+//                        //这里获取处理进度
+//                    }
+//                });
+    }
+
+//            @Override
+//            public void onFailure() {
+//                LogUtils.e("onFailure");
+//            }
+//
+//            @Override
+//            public void onProgress(float v) {
+//
+//            }
+//        });
+
+
+    ////参数分别是图片集合路径,输出路径,输出视频的宽度，输出视频的高度，输出视频的帧率
 //        EpEditor.pic2video(AppConfig.getInstance().getAPP_PATH_ROOT() + "/images/image%d.jpg", videoPath, 480, 320, 10, new OnEditorListener() {
 //            @Override
 //            public void onSuccess() {
@@ -291,11 +628,21 @@ public class HomeTwoFragment extends SwipeSimpleFragment  implements MainHandler
 //
 //            }
 //        });
+//    }
+
+    private String[] execCmd(String cmd, OnCallBack callBack) {
+        String[] command = cmd.split(" ");
+        if (command.length != 0) {
+            execFFmpegBinary(command, callBack);
+        } else {
+            Toast.makeText(_mActivity, "空", Toast.LENGTH_LONG).show();
+        }
+        return command;
     }
 
     private void speak(String text) {
         if (TextUtils.isEmpty(text))
-            text= "百度语音，面向广大开发者永久免费开放语音合成技术。";
+            text = "百度语音，面向广大开发者永久免费开放语音合成技术。";
         // 需要合成的文本text的长度不能超过1024个GBK字节。
         // Map<String, String> params = getParams();
         // synthesizer.setParams(params);
@@ -329,7 +676,6 @@ public class HomeTwoFragment extends SwipeSimpleFragment  implements MainHandler
     }
 
 
-
     /**
      * 切换离线发音。注意需要添加额外的判断：引擎在合成时该方法不能调用
      */
@@ -351,12 +697,16 @@ public class HomeTwoFragment extends SwipeSimpleFragment  implements MainHandler
         String tmpDir = FileUtil.createTmpDir(_mActivity);
         // 设置初始化参数
         // 此处可以改为 含有您业务逻辑的SpeechSynthesizerListener的实现类
-        SpeechSynthesizerListener listener = new FileSaveListener(mainHandler, tmpDir);
+        SpeechSynthesizerListener listener = new FileSaveListener(tmpDir);
         Map<String, String> params = getParams();
 
         // appId appKey secretKey 网站上您申请的应用获取。注意使用离线合成功能的话，需要应用中填写您app的包名。包名在build.gradle中获取。
-        InitConfig initConfig = new InitConfig(appId, appKey, secretKey, ttsMode,  params, listener);
-        synthesizer = new MySyntherizer(_mActivity, initConfig, mainHandler); // 此处可以改为MySyntherizer 了解调用过程
+        InitConfig initConfig = new InitConfig(appId, appKey, secretKey, ttsMode, params, listener);
+        if (synthesizer!=null) {
+            synthesizer.release();
+            synthesizer = null;
+        }
+        synthesizer = new MySyntherizer(_mActivity, initConfig); // 此处可以改为MySyntherizer 了解调用过程
     }
 
     /**
@@ -372,7 +722,7 @@ public class HomeTwoFragment extends SwipeSimpleFragment  implements MainHandler
         LoggerProxy.printable(BuildConfig.DEBUG); // 日志打印在logcat中
         // 设置初始化参数
         // 此处可以改为 含有您业务逻辑的SpeechSynthesizerListener的实现类
-        SpeechSynthesizerListener listener = new UiMessageListener(mainHandler);
+        SpeechSynthesizerListener listener = new UiMessageListener();
 
         Map<String, String> params = getParams();
 
@@ -396,7 +746,7 @@ public class HomeTwoFragment extends SwipeSimpleFragment  implements MainHandler
             }
 
         });
-        synthesizer = new NonBlockSyntherizer(_mActivity, initConfig, mainHandler); // 此处可以改为MySyntherizer 了解调用过程
+        synthesizer = new NonBlockSyntherizer(_mActivity, initConfig); // 此处可以改为MySyntherizer 了解调用过程
     }
 
     /**
@@ -443,4 +793,5 @@ public class HomeTwoFragment extends SwipeSimpleFragment  implements MainHandler
         }
         return offlineResource;
     }
+
 }

@@ -2,6 +2,7 @@ package com.bj.newsfastget.fragment;
 
 import android.content.Context;
 
+import com.bj.newsfastget.activity.MainActivity;
 import com.bj.newsfastget.simple.SwipeSimpleFragment;
 
 /**
@@ -35,6 +36,8 @@ public abstract class BaseMainFragment extends SwipeSimpleFragment {
      */
     @Override
     public boolean onBackPressedSupport() {
+        if (((MainActivity)_mActivity).isDrawerOpen())
+            return true;
         if (getChildFragmentManager().getBackStackEntryCount() > 1) {
             popChild();
         } else {
