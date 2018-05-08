@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">YouTubeUploaderSDK</string>
+    <string name="app_name">BJNewsFastGet</string>
 
     <string name="localFilePath">Local file path:</string>
     <string name="noFileYet">No file yet</string>

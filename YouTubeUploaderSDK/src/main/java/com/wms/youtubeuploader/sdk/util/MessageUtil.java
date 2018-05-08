@@ -11,4 +11,12 @@ public class MessageUtil {
 		msg.what = message;
 		handler.sendMessage(msg);
 	}
+
+	public static void sendHandlerMessage(Handler handler, int message,Object object) {
+		// Try to reuse message objects
+		Message msg = Message.obtain();
+		msg.what = message;
+		msg.obj = object;
+		handler.sendMessage(msg);
+	}
 }

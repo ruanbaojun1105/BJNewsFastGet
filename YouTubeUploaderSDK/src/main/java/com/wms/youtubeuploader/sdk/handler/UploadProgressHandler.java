@@ -75,7 +75,8 @@ public class UploadProgressHandler extends Handler {
 				if(progressDialog != null && progressDialog.isShowing()) {
 					progressDialog.dismiss();
 				}
-				Toast.makeText(activity, R.string.videoUploadFailed, Toast.LENGTH_LONG).show();
+				DialogUtil.showExceptionAlertDialog(activity, "error", (String)(msg.obj));
+				Toast.makeText(activity, R.string.videoUploadFailed+(String)(msg.obj), Toast.LENGTH_LONG).show();
 				break;
 			default:
 				break;

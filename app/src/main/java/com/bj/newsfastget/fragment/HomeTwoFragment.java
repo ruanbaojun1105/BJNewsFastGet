@@ -9,9 +9,7 @@ import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,21 +49,18 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import VideoHandle.EpDraw;
 import VideoHandle.EpEditor;
+import VideoHandle.EpText;
 import VideoHandle.EpVideo;
 import VideoHandle.OnEditorListener;
 import butterknife.BindView;
-import butterknife.ButterKnife;
 import butterknife.OnClick;
-import butterknife.Unbinder;
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -165,6 +160,9 @@ public class HomeTwoFragment extends SwipeSimpleFragment implements MainHandlerC
 
             String itemPath2 = AppConfig.getInstance().getAPP_PATH_ROOT() + "/video";
             FileUtil.copyFilesFassets(_mActivity, "video", itemPath2);
+
+            String itemPath3 = AppConfig.getInstance().getAPP_PATH_ROOT() + "/ttf";
+            FileUtil.copyFilesFassets(_mActivity, "ttf", itemPath3);
 
             itemAdapter.addData(0, "图片和音视频转存完毕");
             initialTtsFile(); // 初始化TTS引擎
@@ -349,7 +347,15 @@ public class HomeTwoFragment extends SwipeSimpleFragment implements MainHandlerC
                             builder.append(AppConfig.getInstance().getAPP_PATH_ROOT()+"/baiduTTS/output-"+time+"-"+i+"-"+count+".wav|");
                         }
                         FileUtil.contentToTxt(wavListFile, builder.toString());*/
-                        toChangeVideo((String) event.getObject(),toCreatSrt(time),time,count);
+                        final String ttfPath = AppConfig.getInstance().getAPP_PATH_ROOT() + "/ttf/youyuan.ttf";
+                        String zimu=synthesizer.getNewText();
+                        String[] ppp=zimu.split(";|,|\\?|!|，|。|？|！");
+                        List<EpText> epTextList=new ArrayList<>();
+                        for (int i = 0; i <ppp.length ; i++) {
+                            EpText text=new EpText(10,290,20, EpText.Color.DarkBlue,ttfPath,ppp[i],new EpText.Time(i*3,i*3+2));
+                            epTextList.add(text);
+                        }
+                        toChangeVideo("image",(String) event.getObject(),toCreatSrt(time),time,epTextList);
                     }
                 }).start();
         }
@@ -375,9 +381,9 @@ public class HomeTwoFragment extends SwipeSimpleFragment implements MainHandlerC
         StringBuilder builder=new StringBuilder(0);
         for (int i = 0; i < ppp.length; i++) {
             builder.append((i+1)+"\n");
-            builder.append(getStartTime(i*5));
+            builder.append(getStartTime(i*3));
             builder.append(" --> ");
-            builder.append(getEndTime(i*5+5));
+            builder.append(getEndTime(i*3+3));
             builder.append("\n");
             builder.append(ppp[i]);
             builder.append("\n");
@@ -423,9 +429,9 @@ public class HomeTwoFragment extends SwipeSimpleFragment implements MainHandlerC
         }
     }
 
-    public void toChangeVideo(final String wavPathData, final String srtFile, final String time, final int count) {
+    public void toChangeVideo(final String images, final String wavPathData, final String srtFile, final String time, final List<EpText> epTextList) {
         //ffmpeg -f image2 -i /home/ttwang/images/image%d.jpg  -vcodec libx264 -r 10  tt.mp4
-        File file = new File(AppConfig.getInstance().getAPP_PATH_ROOT() + "/video");
+        final File file = new File(AppConfig.getInstance().getAPP_PATH_ROOT() + "/video");
         if (!file.exists())
             file.mkdir();
         String cmd;
@@ -434,7 +440,7 @@ public class HomeTwoFragment extends SwipeSimpleFragment implements MainHandlerC
         final String newVideoPath1 = AppConfig.getInstance().getAPP_PATH_ROOT() + "/video/1new-" + time + ".mp4";
         final String newVideoPath2 = AppConfig.getInstance().getAPP_PATH_ROOT() + "/video/2new-" + time + ".mp4";
         final String newVideoPath3 = AppConfig.getInstance().getAPP_PATH_ROOT() + "/video/3new-" + time + ".mp4";
-        cmd = "-threads 8 -y -r 16 -i " + AppConfig.getInstance().getAPP_PATH_ROOT() + "/images/image%d.jpg " + "-vf zoompan=z=1.1:x='if(eq(x,0),100,x-1)':s='480*320' -t 65.0 -vcodec libx264 -r 10 " + videoPath;
+        cmd = "-threads 8 -y -r 16 -i " + AppConfig.getInstance().getAPP_PATH_ROOT() +"/images/"+images+"%d.jpg " + "-vf zoompan=z=1.1:x='if(eq(x,0),100,x-1)':s='480*320' -t 65.0 -vcodec libx264 -r 10 " + videoPath;
 //        if (TextUtils.isEmpty(wavPath))
 //            cmd = "-f image2 -i " + AppConfig.getInstance().getAPP_PATH_ROOT() + "/images/image%d.jpg -vcodec libx264 -r 1 " +
 //                    AppConfig.getInstance().getAPP_PATH_ROOT() + "/video/" + System.currentTimeMillis() + ".mp4";
@@ -450,43 +456,66 @@ public class HomeTwoFragment extends SwipeSimpleFragment implements MainHandlerC
                     public void onSucc() {
                         EpVideo epVideo=new EpVideo(newVideoPath1);
                         epVideo.addDraw(new EpDraw(logo,10,10,50,50,false));
+                        for (EpText te:epTextList) {
+                            epVideo.addText(te);
+                        }
                         EpEditor.OutputOption outputOption = new EpEditor.OutputOption(newVideoPath2);
                         EpEditor.exec(epVideo, outputOption, new OnEditorListener() {
                             @Override
                             public void onSuccess() {
+                                LogUtils.e("------------字幕和水印添加成功  onSuccess  -开始清理文件");
+                                if (new File(wavPathData).exists())
+                                    new File(wavPathData).delete();
+                                if (new File(wavPathData.replace("wav","pcm")).exists())
+                                    new File(wavPathData.replace("wav","pcm")).delete();
+                                if (new File(srtFile).exists())
+                                    new File(srtFile).delete();
+                                if (new File(newVideoPath1).exists())
+                                    new File(newVideoPath1).delete();
+                                if (new File(videoPath).exists())
+                                    new File(videoPath).delete();
+                                if (new File(srtFile).exists())
+                                    new File(srtFile).delete();
+                                File[] listFiles=new File(AppConfig.getInstance().getAPP_PATH_ROOT() + "/images/").listFiles();
+                                for (int i = 0; i < listFiles.length; i++) {
+                                    File image = listFiles[i];
+                                    if (image.exists()&&image.getName().startsWith(images))
+                                        image.delete();
+                                }
                                 //mkv转mp4
                                 //ffmpeg -i input.mkv -filter_complex [0:v][0:s]overlay[v] -map [v] -map 0:a output.mp4
                                 recycler.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        itemAdapter.addData(0, "------------newVideoPath  onSuccess");
+                                        itemAdapter.addData(0, "------------字幕和水印添加成功  onSuccess");
                                         recycler.scrollToPosition(0);
                                     }
                                 });
                                 //添加字幕ffmpeg -i video.avi -vf subtitles=subtitle.srt out.avi
-                                execCmd("-i "+newVideoPath2+" -vf subtitles="+srtFile+" "+newVideoPath3, new OnCallBack() {
-                                    @Override
-                                    public void onSucc() {
-                                        recycler.post(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                itemAdapter.addData(0, "------------字幕添加成功");
-                                                recycler.scrollToPosition(0);
-                                            }
-                                        });
-                                    }
-
-                                    @Override
-                                    public void onFail() {
-                                        recycler.post(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                itemAdapter.addData(0, "------------字幕添加失败");
-                                                recycler.scrollToPosition(0);
-                                            }
-                                        });
-                                    }
-                                });
+                                //ffmpeg -i input.mp4 -i input.srt -map 0:v -map 0:a -map 1:s -c:v copy -c:a copy -c:s mov_text -movflags +faststart output.mp4
+                                //execCmd("-i "+newVideoPath2+" -i "+srtFile+" -map 0:v -map 0:a -map 1:s -c:v copy -c:a copy -c:s mov_text -movflags +faststart "+newVideoPath3, new OnCallBack() {
+//                                    @Override
+//                                    public void onSucc() {
+//                                        recycler.post(new Runnable() {
+//                                            @Override
+//                                            public void run() {
+//                                                itemAdapter.addData(0, "------------字幕添加成功");
+//                                                recycler.scrollToPosition(0);
+//                                            }
+//                                        });
+//                                    }
+//
+//                                    @Override
+//                                    public void onFail() {
+//                                        recycler.post(new Runnable() {
+//                                            @Override
+//                                            public void run() {
+//                                                itemAdapter.addData(0, "------------字幕添加失败");
+//                                                recycler.scrollToPosition(0);
+//                                            }
+//                                        });
+//                                    }
+//                                });
                             }
 
                             @Override
@@ -758,7 +787,7 @@ public class HomeTwoFragment extends SwipeSimpleFragment implements MainHandlerC
         Map<String, String> params = new HashMap<String, String>();
         // 以下参数均为选填
         // 设置在线发声音人： 0 普通女声（默认） 1 普通男声 2 特别男声 3 情感男声<度逍遥> 4 情感儿童声<度丫丫>
-        params.put(SpeechSynthesizer.PARAM_SPEAKER, "0");
+        params.put(SpeechSynthesizer.PARAM_SPEAKER, "3");
         // 设置合成的音量，0-9 ，默认 5
         params.put(SpeechSynthesizer.PARAM_VOLUME, "9");
         // 设置合成的语速，0-9 ，默认 5

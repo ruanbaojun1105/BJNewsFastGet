@@ -1,10 +1,14 @@
 package com.bj.newsfastget.fragment;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.bj.newsfastget.R;
 import com.bj.newsfastget.simple.SwipeSimpleFragment;
+import com.wms.youtubeuploader.sdk.activity.UploadVideoActivity;
 
 import butterknife.BindView;
 
@@ -16,8 +20,8 @@ import butterknife.BindView;
  * @text
  */
 public class HomeThreeFragment  extends SwipeSimpleFragment {
-    @BindView(R.id.text)
-    TextView text;
+    @BindView(R.id.button)
+    Button button;
     public static HomeThreeFragment newInstance() {
         Bundle args = new Bundle();
         HomeThreeFragment fragment = new HomeThreeFragment();
@@ -27,11 +31,16 @@ public class HomeThreeFragment  extends SwipeSimpleFragment {
 
     @Override
     protected int getLayoutId() {
-        return R.layout.fragment_home2;
+        return R.layout.fragment_home3;
     }
 
     @Override
     protected void initCreateView() {
-        text.setText(getClass().getName());
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(_mActivity,UploadVideoActivity.class));
+            }
+        });
     }
 }

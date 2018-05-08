@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -28,8 +29,13 @@ import com.wms.youtubeuploader.sdk.task.FetchYouTubeTokenTask;
 import com.wms.youtubeuploader.sdk.util.DialogUtil;
 import com.wms.youtubeuploader.sdk.util.FileUtil;
 import com.wms.youtubeuploader.sdk.task.YouTubeUploadTask;
+import com.yanzhenjie.album.Action;
+import com.yanzhenjie.album.Album;
+import com.yanzhenjie.album.AlbumFile;
+import com.yanzhenjie.album.Filter;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.UUID;
 
 /**
@@ -92,6 +98,23 @@ public class UploadVideoActivity extends Activity {
 
 		// Do not show the soft keyboard
 		this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+//		final InterstitialAd interstitial = new InterstitialAd(this);
+//		interstitial.setAdUnitId("");
+//		AdRequest adRequest = new AdRequest.Builder().build();
+//		interstitial.setAdListener(new AdListener() {
+//			@Override
+//			public void onAdLoaded() {
+//				// Invoke displayInterstitial() when you are ready to display an interstitial.
+//				if (interstitial.isLoaded()) {
+//					interstitial.show();
+//				}
+//			}
+//			@Override
+//			public void onAdClosed() {
+//			}
+//		});
+//		// Begin loading your interstitial.
+//		interstitial.loadAd(adRequest);
 	}
 
 	@Override
@@ -218,34 +241,59 @@ public class UploadVideoActivity extends Activity {
 	}
 
 	private void startPickVideo() {
-		resetProgress();
+        Album.video(this) // Video selection.
+                .multipleChoice()
+                .camera(true)
+                .columnCount(2)
+                .selectCount(6)
+                .afterFilterVisibility(false) // Show the filtered files, but they are not available.
+                .onResult(new Action<ArrayList<AlbumFile>>() {
+                    @Override
+                    public void onAction(int requestCode, @NonNull ArrayList<AlbumFile> result) {
+                        videoFileName = result.get(0).getPath();
+                        if(videoFileName != null) {
+                            onVideoReady();
+                        }
+                        else {
+                            Toast.makeText(UploadVideoActivity.this, getString(R.string.videoNotAvailable), Toast.LENGTH_LONG).show();
+                        }
+                    }
+                })
+                .onCancel(new Action<String>() {
+                    @Override
+                    public void onAction(int requestCode,@NonNull String result) {
+                    }
+                })
+                .start();
 
-		Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
-		try {
-			startActivityForResult(intent, IntentRequestCode.PICK_UP_VIDEO);
-		}
-		catch (ActivityNotFoundException e) {
-			 // On Andriod 2.2, the above method may cause exception due to not finding an activity to handle the intent. Use the method below instead.
-			Intent mediaChooser = new Intent(Intent.ACTION_GET_CONTENT);
-			mediaChooser.setType("video/*");
-			startActivityForResult(mediaChooser, IntentRequestCode.PICK_UP_VIDEO);
-		}
-		catch (SecurityException e) {
-			// When picking up videos, there may be an exception like:
-			//  java.lang.SecurityException:
-			//      Permission Denial:
-			//      starting Intent { act=android.intent.action.PICK
-			//      dat=content://media/external/video/media
-			//      cmp=com.android.music/.VideoBrowserActivity } from ProcessRecord
-			// Try another way to start the intent
-			intent = new Intent(Intent.ACTION_PICK, null);
-			intent.setType("video/*");
-			try {
-				startActivityForResult(intent, IntentRequestCode.PICK_UP_VIDEO);
-			} catch (Exception ex) {
-				DialogUtil.showExceptionAlertDialog(UploadVideoActivity.this, getString(R.string.cannotPickUpVideo), getString(R.string.notSupportedOnDevice));
-			}
-		}
+//		resetProgress();
+//
+//		Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+//		try {
+//			startActivityForResult(intent, IntentRequestCode.PICK_UP_VIDEO);
+//		}
+//		catch (ActivityNotFoundException e) {
+//			 // On Andriod 2.2, the above method may cause exception due to not finding an activity to handle the intent. Use the method below instead.
+//			Intent mediaChooser = new Intent(Intent.ACTION_GET_CONTENT);
+//			mediaChooser.setType("video/*");
+//			startActivityForResult(mediaChooser, IntentRequestCode.PICK_UP_VIDEO);
+//		}
+//		catch (SecurityException e) {
+//			// When picking up videos, there may be an exception like:
+//			//  java.lang.SecurityException:
+//			//      Permission Denial:
+//			//      starting Intent { act=android.intent.action.PICK
+//			//      dat=content://media/external/video/media
+//			//      cmp=com.android.music/.VideoBrowserActivity } from ProcessRecord
+//			// Try another way to start the intent
+//			intent = new Intent(Intent.ACTION_PICK, null);
+//			intent.setType("video/*");
+//			try {
+//				startActivityForResult(intent, IntentRequestCode.PICK_UP_VIDEO);
+//			} catch (Exception ex) {
+//				DialogUtil.showExceptionAlertDialog(UploadVideoActivity.this, getString(R.string.cannotPickUpVideo), getString(R.string.notSupportedOnDevice));
+//			}
+//		}
 	}
 
 	private void onVideoReady() {

@@ -2,7 +2,9 @@ package com.wms.youtubeuploader.sdk.task;
 
 import android.app.Activity;
 import android.os.AsyncTask;
+import android.util.Log;
 
+import com.blankj.utilcode.util.LogUtils;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.media.MediaHttpUploader;
@@ -141,18 +143,21 @@ public class YouTubeUploadTask extends AsyncTask<Void, Void, Void> {
             return videoInsert;
         } 
         catch (FileNotFoundException e) {
-            MessageUtil.sendHandlerMessage(uploadProgressHandler, HandlerMessage.VIDEO_UPLOAD_FAILED);
 	        errorMessage = "File Not Found: " + e.getMessage();
+            LogUtils.e("UPLOAD ERR FileNotFEx",errorMessage);
+            MessageUtil.sendHandlerMessage(uploadProgressHandler, HandlerMessage.VIDEO_UPLOAD_FAILED,errorMessage);
             return null;
         } 
         catch (IOException e) {
-	        MessageUtil.sendHandlerMessage(uploadProgressHandler, HandlerMessage.VIDEO_UPLOAD_FAILED);
 	        errorMessage = "IOException: " + e.getMessage();
+            LogUtils.e("UPLOAD ERR IOException",errorMessage);
+            MessageUtil.sendHandlerMessage(uploadProgressHandler, HandlerMessage.VIDEO_UPLOAD_FAILED,errorMessage);
             return null;
         } 
         catch (Exception e) {
-	        MessageUtil.sendHandlerMessage(uploadProgressHandler, HandlerMessage.VIDEO_UPLOAD_FAILED);
         	errorMessage = e.getMessage();
+            LogUtils.e("UPLOAD ERR Exception",errorMessage);
+            MessageUtil.sendHandlerMessage(uploadProgressHandler, HandlerMessage.VIDEO_UPLOAD_FAILED,errorMessage);
             return null;
 		}
     }

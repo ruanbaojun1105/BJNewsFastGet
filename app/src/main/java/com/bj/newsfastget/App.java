@@ -29,10 +29,13 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.bj.newsfastget.util.Cockroach;
+import com.bj.newsfastget.util.GlideAlbumLoader;
 import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.SizeUtils;
 import com.blankj.utilcode.util.Utils;
 import com.bumptech.glide.Glide;
+import com.yanzhenjie.album.Album;
+import com.yanzhenjie.album.AlbumConfig;
 import com.yanzhenjie.nohttp.InitializationConfig;
 import com.yanzhenjie.nohttp.Logger;
 import com.yanzhenjie.nohttp.NoHttp;
@@ -41,6 +44,7 @@ import com.yanzhenjie.nohttp.cache.DBCacheStore;
 import com.yanzhenjie.nohttp.cookie.DBCookieStore;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import me.yokeyword.fragmentation.Fragmentation;
@@ -126,6 +130,11 @@ public class App extends android.app.Application {
         NoHttp.initialize(configt);
         Logger.setDebug(BuildConfig.DEBUG);// 开启NoHttp的调试模式, 配置后可看到请求过程、日志和错误信息。
         Logger.setTag("NoHttp-balancingcar-tag");// 打印Log的tag。
+        Album.initialize(AlbumConfig.newBuilder(App.getContext())
+                .setAlbumLoader(new GlideAlbumLoader()) // 设置Album加载器。
+                .setLocale(Locale.CHINA) // 比如强制设置在任何语言下都用中文显示。
+                .build()
+        );
         AppConfig.getInstance();
         Fragmentation.builder()
                 // 设置 栈视图 模式为 （默认）悬浮球模式   SHAKE: 摇一摇唤出  NONE：隐藏， 仅在Debug环境生效
