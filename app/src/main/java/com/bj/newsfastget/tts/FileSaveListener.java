@@ -60,6 +60,8 @@ public class FileSaveListener extends UiMessageListener {
 
     @Override
     public void onSynthesizeStart(String utteranceId) {
+        if (utteranceId.startsWith("no"))
+            return;
         String[] data=utteranceId.split("-");
         final String time=data[0];
         int index=Integer.parseInt(data[1]);
@@ -98,6 +100,8 @@ public class FileSaveListener extends UiMessageListener {
     @Override
     public void onSynthesizeDataArrived(String utteranceId, byte[] data, int progress) {
         super.onSynthesizeDataArrived(utteranceId, data, progress);
+        if (utteranceId.startsWith("no"))
+            return;
         Log.i(TAG, "合成进度回调, progress：" + progress + ";序列号:" + utteranceId);
         try {
             ttsFileBufferedOutputStream.write(data);
@@ -109,6 +113,8 @@ public class FileSaveListener extends UiMessageListener {
     @Override
     public void onSynthesizeFinish(String utteranceId) {
         super.onSynthesizeFinish(utteranceId);
+        if (utteranceId.startsWith("no"))
+            return;
         close(utteranceId);
     }
 
@@ -120,6 +126,8 @@ public class FileSaveListener extends UiMessageListener {
      */
     @Override
     public void onError(String utteranceId, SpeechError speechError) {
+        if (utteranceId.startsWith("no"))
+            return;
         close(utteranceId);
         super.onError(utteranceId, speechError);
     }

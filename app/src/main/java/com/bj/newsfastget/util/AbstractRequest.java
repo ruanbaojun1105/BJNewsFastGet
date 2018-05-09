@@ -1,5 +1,6 @@
 package com.bj.newsfastget.util;
 
+import com.blankj.utilcode.util.LogUtils;
 import com.yanzhenjie.nohttp.Headers;
 import com.yanzhenjie.nohttp.RequestMethod;
 import com.yanzhenjie.nohttp.rest.Request;
@@ -48,6 +49,7 @@ public abstract class AbstractRequest<T> extends Request<Result<T>> {
 //                    }
                 } catch (Exception e) {
                     // 解析异常，测试时通过，正式发布后就是服务器的锅。
+                    LogUtils.e(e.toString());
                     String error = "服务器返回数据格式错误，请稍后重试";
                     return new Result<>(false, null, headers, error);
                 }

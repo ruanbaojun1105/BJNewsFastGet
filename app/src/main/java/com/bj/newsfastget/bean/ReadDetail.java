@@ -1,6 +1,9 @@
 package com.bj.newsfastget.bean;
 
 import java.util.Date;
+import java.util.List;
+
+import io.realm.RealmObject;
 
 /**
  * com.bj.newsfastget.bean
@@ -9,7 +12,9 @@ import java.util.Date;
  * @email 401763159@qq.com
  * @text
  */
-public class ReadDetail {
+public class ReadDetail extends RealmObject{
+    public boolean isUploadVideo;//是否已上传完成视频
+    public boolean isSynthesisVideo;//是否已合成视频
     public String content_id;
     public String hp_title;
     public String sub_title;
@@ -22,7 +27,7 @@ public class ReadDetail {
     public String wb_name;
     public String wb_img_url;
     public Date last_update_date;
-    public Date web_url;
+    public String web_url;
     public String guide_word;
     public String audio;
     public String anchor;

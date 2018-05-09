@@ -1,8 +1,11 @@
 apply plugin: 'com.android.application'
-
+apply plugin: 'realm-android'
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion as Integer
 //    buildToolsVersion rootProject.ext.buildToolsVersion as String
+    realm {
+        syncEnabled = false
+    }
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion as Integer
         targetSdkVersion rootProject.ext.targetSdkVersion as Integer
@@ -75,6 +78,18 @@ dependencies {
     //    compile 'com.google.code.gson:gson:2.8.3'
     implementation 'com.alibaba:fastjson:1.1.68.android'
     implementation 'com.github.yangjie10930:EpMedia:v0.9.5'
-    implementation project(':YouTubeUploaderSDK')
     implementation 'com.yanzhenjie:album:2.0.2'
+    compile 'de.hdodenhof:circleimageview:2.1.0'//CircleImageView
+
+
+    //youtube
+    implementation 'com.google.http-client:google-http-client-gson:1.21.0'
+    implementation 'com.google.android.gms:play-services-auth:15.0.1'
+    implementation('com.google.api-client:google-api-client-android:1.23.0') {
+        exclude group: 'org.apache.httpcomponents'
+    }
+    implementation('com.google.apis:google-api-services-youtube:v3-rev198-1.23.0') {
+        exclude group: 'org.apache.httpcomponents'
+    }
+
 }

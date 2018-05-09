@@ -68,8 +68,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.wms.youtubeuploader.sdk.activity.UploadVideoActivity"/>
-        <activity android:name="com.wms.youtubeuploader.sdk.activity.MainActivity"/>
+        <activity android:name=".youtube.activity.UploadVideoActivity"/>
+        <activity android:name=".youtube.activity.MainActivity"/>
     </application>
 
 </manifest>

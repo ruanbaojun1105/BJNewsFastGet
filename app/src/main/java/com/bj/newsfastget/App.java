@@ -44,9 +44,12 @@ import com.yanzhenjie.nohttp.cache.DBCacheStore;
 import com.yanzhenjie.nohttp.cookie.DBCookieStore;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
 import me.yokeyword.fragmentation.Fragmentation;
 import me.yokeyword.fragmentation.helper.ExceptionHandler;
 
@@ -136,6 +139,7 @@ public class App extends android.app.Application {
                 .build()
         );
         AppConfig.getInstance();
+        initRealmAndData();
         Fragmentation.builder()
                 // 设置 栈视图 模式为 （默认）悬浮球模式   SHAKE: 摇一摇唤出  NONE：隐藏， 仅在Debug环境生效
                 .stackViewMode(Fragmentation.BUBBLE)
@@ -152,6 +156,16 @@ public class App extends android.app.Application {
                     }
                 })
                 .install();
+    }
+
+    private void initRealmAndData() {
+        //realm
+        Realm.init(this);//初始化数据库
+        RealmConfiguration config = new RealmConfiguration.Builder()
+                .name("rbj_news-xixi.realm")//.migration(new MyMigration())
+                .deleteRealmIfMigrationNeeded()//如果数据有冲突，则删除数据重新开始，工具类有升级的方法
+                .build();
+        Realm.setDefaultConfiguration(config);
     }
 
     @Override

@@ -6,27 +6,24 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 import com.bj.newsfastget.R;
-import com.bj.newsfastget.adapter.InfoAdapter;
 import com.bj.newsfastget.adapter.ReadAdapter;
 import com.bj.newsfastget.bean.DataList;
-import com.bj.newsfastget.bean.ReadDetail;
+import com.bj.newsfastget.simple.EventComm;
 import com.bj.newsfastget.simple.SwipeSimpleFragment;
-import com.bj.newsfastget.util.DefaultResponseListener;
 import com.bj.newsfastget.util.EntityRequest;
-import com.bj.newsfastget.util.Http;
 import com.bj.newsfastget.util.HttpListener;
 import com.bj.newsfastget.util.HttpUtil;
 import com.bj.newsfastget.util.Result;
-import com.bj.newsfastget.util.StringRequest;
+import com.bj.newsfastget.youtube.activity.UploadVideoActivity;
 import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.TimeUtils;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.animation.AlphaInAnimation;
-import com.wms.youtubeuploader.sdk.activity.UploadVideoActivity;
-import com.yanzhenjie.nohttp.rest.AsyncRequestExecutor;
+
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -90,28 +87,18 @@ public class HomeThreeFragment  extends SwipeSimpleFragment {
                 LogUtils.e("-----------");
                 switch (view.getId()) {
                     case R.id.rootView:
-                        String taget = "http://v3.wufazhuce.com:8000/api/essay/" + itemAdapter.getItem(position).item_id + "?channel=wdj&source=channel_reading&source_id=9264&version=4.0.2&uuid=ffffffff-a90e-706a-63f7-ccf973aae5ee&platform=android";
-                        EntityRequest<ReadDetail> request = new EntityRequest<>(taget,ReadDetail.class);
-                        HttpUtil.postExecuteThead(request, new HttpListener() {
-                            @Override
-                            public void onSucceed(int what, Result t) {
-                                LogUtils.e(t.getResult().toString());
-                                ReadDetail readDetail= (ReadDetail) t.getResult();
-                            }
-
-                            @Override
-                            public void onFailed(int what, Exception e) {
-                            }
-
-                            @Override
-                            public void onFinish(int what) {
-
-                            }
-                        });
+                        start(ReadDetailFragment.newInstance(itemAdapter.getItem(position).item_id,itemAdapter.getItem(position).img_url));
                         break;
                 }
             }
         });
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMessageEvent(final EventComm event) {
+        if ("RecyclerToTop".equals(event.getType())){
+            recycler.scrollToPosition(0);
+        }
     }
 
     private void refreshList(String time) {
