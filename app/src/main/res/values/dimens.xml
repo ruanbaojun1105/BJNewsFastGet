@@ -317,4 +317,5 @@
     <dimen name="dp_298">298dp</dimen>
     <dimen name="dp_299">299dp</dimen>
     <dimen name="dp_300">300dp</dimen>
+    <dimen name="rv_text_margin_horizon">10dp</dimen>
 </resources>

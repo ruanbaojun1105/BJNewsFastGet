@@ -12,6 +12,11 @@ public class EntityRequest<T> extends AbstractRequest<T> {
         this.clazz = clazz;
     }
 
+    public EntityRequest(String url, Class<T> clazz) {
+        super(url);
+        this.clazz = clazz;
+    }
+
     @Override
     protected T getResult(String data) throws Exception {
         return JSON.parseObject(data, clazz);
